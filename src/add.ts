@@ -186,7 +186,7 @@ export const addPackages = async (
             const srcPath = join(localPackageDir, src)
             const destPath = join(binDir, dest)
             ensureSymlinkSync(srcPath, destPath)
-            fs.chmodSync(destPath, 700)
+            fs.chmodSync(srcPath, 0o755)
           }
           if (typeof pkg.bin === 'string') {
             fs.ensureDirSync(binDir)
