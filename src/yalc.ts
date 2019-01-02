@@ -126,6 +126,7 @@ yargs
       return yargs
         .default('yarn', isYarn())
         .boolean(['file', 'dev', 'save-dev', 'link', 'yarn', 'pure'])
+        .alias('D', 'dev')
         .help(true)
     },
     handler: argv => {
