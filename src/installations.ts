@@ -18,21 +18,14 @@ export type InstallationsFile = { [packageName: string]: string[] }
 export const readInstallationsFile = (): InstallationsFile => {
   const storeDir = getStoreMainDir()
   const installationFilePath = path.join(storeDir, values.installationsFile)
-  let installationsConfig: InstallationsFile
-
-  try {
-    fs.accessSync(installationFilePath)
+  if (fs.existsSync(installationFilePath)) {
     try {
-      installationsConfig = fs.readJsonSync(installationFilePath)
+      return fs.readJsonSync(installationFilePath)
     } catch (e) {
       console.log('Error reading installations file', installationFilePath, e)
-      installationsConfig = {}
     }
-  } catch (e) {
-    installationsConfig = {}
   }
-
-  return installationsConfig
+  return {}
 }
 
 export const showInstallations = ({ packages }: { packages: string[] }) => {
