@@ -69,13 +69,14 @@ export const updatePackages = async (
   await addPackages(packagesLinks, {
     workingDir,
     link: true,
+    noSave: true,
     pure: false
   })
 
   const packagesLinkDep = lockPackages.filter(p => p.link).map(p => p.name)
   await addPackages(packagesLinkDep, {
     workingDir,
-    linkDep: true,
+    link: true,
     pure: false
   })
 
