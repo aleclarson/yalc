@@ -60,17 +60,9 @@ export const copyPackageToStore = async (
   }
 ) => {
   const { workingDir } = options
-
-  const copyFromDir = options.workingDir
-  const storePackageStoreDir = join(
-    getStorePackagesDir(),
-    pkg.name,
-    pkg.version
-  )
-
   const ignoreFileContent = readIgnoreFile(workingDir)
-
   const ignoreRule = ignore().add(ignoreFileContent)
+
   const npmList: string[] = await npmPacklist({ path: workingDir })
   const filesToCopy = npmList.filter(f => !ignoreRule.ignores(f))
 
@@ -88,6 +80,13 @@ export const copyPackageToStore = async (
     })
     console.log(`Total ${filesToCopy.length} files.`)
   }
+
+  const storePackageStoreDir = join(
+    getStorePackagesDir(),
+    pkg.name,
+    pkg.version
+  )
+
   const copyFilesToStore = async () => {
     await fs.remove(storePackageStoreDir)
     return Promise.all(
@@ -95,20 +94,22 @@ export const copyPackageToStore = async (
         .sort()
         .map(relPath =>
           copyFile(
-            join(copyFromDir, relPath),
+            join(workingDir, relPath),
             join(storePackageStoreDir, relPath),
             relPath
           )
         )
     )
   }
+
   const hashes = options.changed
     ? await Promise.all(
         filesToCopy
           .sort()
-          .map(relPath => getFileHash(join(copyFromDir, relPath), relPath))
+          .map(relPath => getFileHash(join(workingDir, relPath), relPath))
       )
     : await copyFilesToStore()
+
   const signature = crypto
     .createHash('md5')
     .update(hashes.join(''))
@@ -131,7 +132,7 @@ export const copyPackageToStore = async (
     fs.removeSync(storePackageStoreDir)
     const ensureSymlinkSync = fs.ensureSymlinkSync as any
     filesToCopy.forEach(f => {
-      const source = join(copyFromDir, f)
+      const source = join(workingDir, f)
       if (fs.statSync(source).isDirectory()) {
         return
       }
@@ -139,16 +140,17 @@ export const copyPackageToStore = async (
     })
   }
 
-  writeSignatureFile(storePackageStoreDir, signature)
   const versionPre =
     options.signature && !options.knit
       ? '-' + signature.substr(0, shortSignatureLength)
       : ''
-  const pkgToWrite: PackageManifest = {
+
+  writePackage(storePackageStoreDir, {
     ...pkg,
     version: pkg.version + versionPre,
     devDependencies: undefined
-  }
-  writePackage(storePackageStoreDir, pkgToWrite)
+  })
+
+  writeSignatureFile(storePackageStoreDir, signature)
   return signature
 }
