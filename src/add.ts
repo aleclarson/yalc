@@ -103,13 +103,10 @@ export const addPackages = async (
 
       const pkg = readPackage(storedPackageDir)
       if (!pkg) {
-        return
+        return null
       }
 
-      const destYalcCopyDir = join(workingDir, values.yalcPackagesFolder, name)
-      fs.removeSync(destYalcCopyDir)
-      fs.copySync(storedPackageDir, destYalcCopyDir)
-
+      const signature = readSignatureFile(storedPackageDir)
       let replacedVersion = ''
       if (doPure) {
         if (localPkg.workspaces) {
@@ -127,11 +124,6 @@ export const addPackages = async (
           )} purely`
         )
       } else {
-        const destModulesDir = join(workingDir, 'node_modules', name)
-
-        fs.removeSync(destModulesDir)
-        ensureSymlinkSync(destYalcCopyDir, destModulesDir, 'junction')
-
         if (!options.link) {
           const protocol = options.linkDep ? 'link:' : 'file:'
           const localAddress =
@@ -139,40 +131,59 @@ export const addPackages = async (
 
           const dependencies = localPkg.dependencies || {}
           const devDependencies = localPkg.devDependencies || {}
-          let whereToAdd = options.dev ? devDependencies : dependencies
 
-          if (options.dev) {
-            if (dependencies[pkg.name]) {
-              replacedVersion = dependencies[pkg.name]
-              delete dependencies[pkg.name]
+          const whereToRemove = devDependencies[pkg.name]
+            ? devDependencies
+            : dependencies
+
+          replacedVersion = whereToRemove[pkg.name] || ''
+          if (replacedVersion !== localAddress) {
+            const whereToAdd =
+              options.dev || whereToRemove === devDependencies
+                ? devDependencies
+                : dependencies
+
+            localPkgUpdated = true
+            whereToAdd[pkg.name] = localAddress
+            if (whereToAdd !== whereToRemove) {
+              delete whereToRemove[pkg.name]
             }
           } else {
-            if (!dependencies[pkg.name]) {
-              if (devDependencies[pkg.name]) {
-                whereToAdd = devDependencies
-              }
-            }
+            replacedVersion = ''
           }
-
-          if (whereToAdd[pkg.name] !== localAddress) {
-            replacedVersion = replacedVersion || whereToAdd[pkg.name]
-            whereToAdd[pkg.name] = localAddress
-            localPkg.dependencies =
-              whereToAdd === dependencies ? dependencies : localPkg.dependencies
-            localPkg.devDependencies =
-              whereToAdd === devDependencies
-                ? devDependencies
-                : localPkg.devDependencies
-            localPkgUpdated = true
-          }
-          replacedVersion =
-            replacedVersion == localAddress ? '' : replacedVersion
         }
 
+        const localPackageDir = join(
+          workingDir,
+          values.yalcPackagesFolder,
+          name
+        )
+
+        if (signature === readSignatureFile(localPackageDir)) {
+          console.log(
+            `"${packageName}" already exists in the local ".yalc" directory`
+          )
+          return null
+        }
+
+        // Replace the local ".yalc/{name}" directory.
+        fs.removeSync(localPackageDir)
+        fs.copySync(storedPackageDir, localPackageDir)
+
+        // Replace the local "node_modules/{name}" symlink.
+        const nodeModulesDest = join(workingDir, 'node_modules', name)
+        fs.removeSync(nodeModulesDest)
+        if (options.link) {
+          ensureSymlinkSync(localPackageDir, nodeModulesDest, 'junction')
+        } else {
+          fs.copySync(localPackageDir, nodeModulesDest)
+        }
+
+        // Update the local "node_modules/.bin" directory.
         if (pkg.bin) {
           const binDir = join(workingDir, 'node_modules', '.bin')
           const addBinScript = (src: string, dest: string) => {
-            const srcPath = join(destYalcCopyDir, src)
+            const srcPath = join(localPackageDir, src)
             const destPath = join(binDir, dest)
             ensureSymlinkSync(srcPath, destPath)
             fs.chmodSync(destPath, 700)
@@ -192,11 +203,10 @@ export const addPackages = async (
         console.log(
           `Package ${pkg.name}@${
             pkg.version
-          } ${addedAction} ==> ${destModulesDir}.`
+          } ${addedAction} ==> ${nodeModulesDest}.`
         )
       }
 
-      const signature = readSignatureFile(storedPackageDir)
       return {
         signature,
         name,
