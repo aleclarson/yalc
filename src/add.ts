@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import * as fs from 'fs-extra'
 import { join } from 'path'
 import * as del from 'del'
@@ -22,7 +21,6 @@ export interface AddPackagesOptions {
   dev?: boolean
   link?: boolean
   linkDep?: boolean
-  yarn?: boolean
   safe?: boolean
   pure?: boolean
   workingDir: string
@@ -212,7 +210,7 @@ export const addPackages = async (
         name,
         version,
         replaced: replacedVersion,
-        path: options.workingDir
+        path: workingDir
       }
     })
     .filter(_ => !!_)
@@ -232,13 +230,8 @@ export const addPackages = async (
       link: options.linkDep && !doPure,
       signature: i.signature
     })),
-    { workingDir: options.workingDir }
+    { workingDir }
   )
 
   await addInstallations(addedInstalls)
-
-  if (options.yarn) {
-    console.log('Running yarn:')
-    execSync('yarn', { cwd: options.workingDir })
-  }
 }
