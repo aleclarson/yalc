@@ -128,16 +128,9 @@ export const addPackages = async (
         )
       } else {
         const destModulesDir = join(workingDir, 'node_modules', name)
-        if (options.link || options.linkDep || isSymlink(destModulesDir)) {
-          fs.removeSync(destModulesDir)
-        }
 
-        if (options.link || options.linkDep) {
-          ensureSymlinkSync(destYalcCopyDir, destModulesDir, 'junction')
-        } else {
-          emptyDirExcludeNodeModules(destModulesDir)
-          fs.copySync(destYalcCopyDir, destModulesDir)
-        }
+        fs.removeSync(destModulesDir)
+        ensureSymlinkSync(destYalcCopyDir, destModulesDir, 'junction')
 
         if (!options.link) {
           const protocol = options.linkDep ? 'link:' : 'file:'
