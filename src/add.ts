@@ -107,7 +107,7 @@ export const addPackages = async (
       }
 
       const destYalcCopyDir = join(workingDir, values.yalcPackagesFolder, name)
-      emptyDirExcludeNodeModules(destYalcCopyDir)
+      fs.removeSync(destYalcCopyDir)
       fs.copySync(storedPackageDir, destYalcCopyDir)
 
       let replacedVersion = ''
