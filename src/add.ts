@@ -1,6 +1,6 @@
 import * as fs from 'fs-extra'
-import { join } from 'path'
 import * as del from 'del'
+import { dirname, join, relative } from 'path'
 import { addInstallations } from './installations'
 
 import { addPackageToLockfile } from './lockfile'
@@ -171,7 +171,8 @@ export const addPackages = async (
         const nodeModulesDest = join(workingDir, 'node_modules', name)
         fs.removeSync(nodeModulesDest)
         if (options.link) {
-          ensureSymlinkSync(localPackageDir, nodeModulesDest, 'junction')
+          const target = relative(dirname(nodeModulesDest), localPackageDir)
+          ensureSymlinkSync(target, nodeModulesDest)
         } else {
           fs.copySync(localPackageDir, nodeModulesDest)
         }
@@ -182,7 +183,7 @@ export const addPackages = async (
           const addBinScript = (src: string, dest: string) => {
             const srcPath = join(localPackageDir, src)
             const destPath = join(binDir, dest)
-            ensureSymlinkSync(srcPath, destPath)
+            ensureSymlinkSync(relative(binDir, srcPath), destPath)
             fs.chmodSync(srcPath, 0o755)
           }
           if (typeof pkg.bin === 'string') {
