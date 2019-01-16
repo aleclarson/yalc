@@ -141,7 +141,9 @@ export const copyPackageToStore = async (
   // Install dependencies for the copied package.
   if (pkg.dependencies && Object.keys(pkg.dependencies).length) {
     console.log('Installing dependencies...')
-    execSync(`${npmBin} install --production`, { cwd: storePackageStoreDir })
+    execSync(`${npmBin} install --production --ignore-scripts`, {
+      cwd: storePackageStoreDir
+    })
   }
 
   if (options.knit) {
