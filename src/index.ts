@@ -85,8 +85,6 @@ export interface PackageManifest {
 export const getPackageManager = (cwd: string) =>
   fs.existsSync(join(cwd, 'yarn.lock')) ? 'yarn' : 'npm'
 
-export const execLoudOptions = { stdio: 'inherit' }
-
 export const parsePackageName = (packageName: string) => {
   const match = packageName.match(/(^@[^/]+\/)?([^@]+)@?(.*)/) || []
   if (!match) {

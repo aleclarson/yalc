@@ -10,7 +10,6 @@ import {
 
 import {
   PackageManifest,
-  execLoudOptions,
   getPackageManager,
   updatePackages,
   readPackage,
@@ -72,11 +71,8 @@ export const publishPackage = async (options: PublishPackageOptions) => {
   }
 
   const scripts = pkg.scripts || ({} as PackageScripts)
-  const changeDirCmd = 'cd ' + workingDir + ' && '
   const scriptRunCmd =
-    !options.force && pkg.scripts
-      ? changeDirCmd + getPackageManager(workingDir) + ' run '
-      : ''
+    !options.force && pkg.scripts ? getPackageManager(workingDir) + ' run ' : ''
 
   if (scriptRunCmd) {
     const scriptNames: (keyof PackageScripts)[] = [
@@ -89,7 +85,10 @@ export const publishPackage = async (options: PublishPackageOptions) => {
     if (scriptName) {
       const scriptCmd = scripts[scriptName]
       console.log(`Running ${scriptName} script: ${scriptCmd}`)
-      execSync(scriptRunCmd + scriptName, execLoudOptions)
+      execSync(scriptRunCmd + scriptName, {
+        cwd: workingDir,
+        stdio: 'inherit'
+      })
     }
   }
 
@@ -105,7 +104,10 @@ export const publishPackage = async (options: PublishPackageOptions) => {
     if (scriptName) {
       const scriptCmd = scripts[scriptName]
       console.log(`Running ${scriptName} script: ${scriptCmd}`)
-      execSync(scriptRunCmd + scriptName, execLoudOptions)
+      execSync(scriptRunCmd + scriptName, {
+        cwd: workingDir,
+        stdio: 'inherit'
+      })
     }
   }
 
