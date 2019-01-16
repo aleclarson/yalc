@@ -24,9 +24,6 @@ const getVersionMessage = () => {
   return pkg.version
 }
 
-const isYarn = (cwd: string = process.cwd()) =>
-  getPackageManager(cwd) === 'yarn'
-
 /* tslint:disable-next-line */
 yargs
   .usage(cliCommand + ' [command] [options] [package1 [package2...]]')
@@ -53,7 +50,6 @@ yargs
     builder: () => {
       return yargs
         .default('sig', true)
-        .default('yarn', isYarn())
         .boolean(['push', 'push-safe'].concat(publishFlags))
     },
     handler: argv => {
@@ -101,7 +97,6 @@ yargs
       return yargs
         .default('force', undefined)
         .default('sig', true)
-        .default('yarn', isYarn())
         .boolean(['safe'].concat(publishFlags))
     },
     handler: argv => {
