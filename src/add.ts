@@ -51,6 +51,9 @@ export const addPackages = async (
   const doPure =
     options.pure !== undefined ? options.pure : !!localPkg.workspaces
 
+  const dependencies = localPkg.dependencies || {}
+  const devDependencies = localPkg.devDependencies || {}
+
   const addedInstalls = packages
     .map(packageName => {
       const { name, version = '' } = parsePackageName(packageName)
@@ -104,9 +107,6 @@ export const addPackages = async (
           const protocol = options.link ? 'link:' : 'file:'
           const localAddress =
             protocol + values.yalcPackagesFolder + '/' + pkg.name
-
-          const dependencies = localPkg.dependencies || {}
-          const devDependencies = localPkg.devDependencies || {}
 
           const whereToRemove = devDependencies[pkg.name]
             ? devDependencies
@@ -196,6 +196,20 @@ export const addPackages = async (
     .map(_ => _!)
 
   if (localPkgUpdated) {
+    if (localPkg.dependencies !== dependencies) {
+      if (Object.keys(dependencies).length) {
+        localPkg.dependencies = dependencies
+      } else {
+        delete localPkg.dependencies
+      }
+    }
+    if (localPkg.devDependencies !== devDependencies) {
+      if (Object.keys(devDependencies).length) {
+        localPkg.devDependencies = devDependencies
+      } else {
+        delete localPkg.devDependencies
+      }
+    }
     writePackage(workingDir, localPkg)
   }
 
