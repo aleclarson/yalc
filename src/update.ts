@@ -15,6 +15,7 @@ import {
 export interface UpdatePackagesOptions {
   workingDir: string
   noInstallationsRemove?: boolean
+  force?: boolean
   safe?: boolean
   yarn?: boolean
 }
@@ -60,7 +61,10 @@ export const updatePackages = async (
   }))
 
   const packagesFiles = lockPackages.filter(p => p.file).map(p => p.name)
-  await addPackages(packagesFiles, { workingDir })
+  await addPackages(packagesFiles, {
+    workingDir,
+    force: options.force
+  })
 
   const packagesLinks = lockPackages
     .filter(p => !p.file && !p.link && !p.pure)
@@ -70,14 +74,16 @@ export const updatePackages = async (
     workingDir,
     link: true,
     noSave: true,
-    pure: false
+    pure: false,
+    force: options.force
   })
 
   const packagesLinkDep = lockPackages.filter(p => p.link).map(p => p.name)
   await addPackages(packagesLinkDep, {
     workingDir,
     link: true,
-    pure: false
+    pure: false,
+    force: options.force
   })
 
   const packagesPure = lockPackages.filter(p => p.pure).map(p => p.name)

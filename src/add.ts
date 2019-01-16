@@ -20,6 +20,7 @@ export interface AddPackagesOptions {
   dev?: boolean
   link?: boolean
   pure?: boolean
+  force?: boolean
   noSave?: boolean
   workingDir: string
 }
@@ -135,7 +136,10 @@ export const addPackages = async (
           name
         )
 
-        if (signature === readSignatureFile(localPackageDir)) {
+        if (
+          !options.force &&
+          signature === readSignatureFile(localPackageDir)
+        ) {
           console.log(
             `"${packageName}" already exists in the local ".yalc" directory`
           )

@@ -119,10 +119,11 @@ yargs
     describe: 'Add package from yalc repo to the project',
     builder: () => {
       return yargs
-        .boolean(['link', 'dev', 'save', 'pure'])
+        .boolean(['link', 'dev', 'save', 'pure', 'force'])
         .default('link', true)
         .default('save', true)
         .alias('D', 'dev')
+        .alias('f', 'force')
         .help(true)
     },
     handler: argv => {
@@ -134,6 +135,7 @@ yargs
         dev: argv.dev,
         link: argv.link,
         pure: hasPureArg ? argv.pure : undefined,
+        force: argv.force,
         noSave: !argv.save,
         workingDir: process.cwd()
       })
@@ -143,10 +145,14 @@ yargs
     command: 'link',
     describe: 'Link package from yalc repo to the project',
     builder: () => {
-      return yargs.help(true)
+      return yargs
+        .boolean(['force'])
+        .alias('f', 'force')
+        .help(true)
     },
     handler: argv => {
       return addPackages(argv._.slice(1), {
+        force: argv.force,
         link: true,
         noSave: true,
         workingDir: process.cwd()
@@ -157,11 +163,15 @@ yargs
     command: 'update',
     describe: 'Update packages from yalc repo',
     builder: () => {
-      return yargs.help(true)
+      return yargs
+        .boolean(['force'])
+        .alias('f', 'force')
+        .help(true)
     },
     handler: argv => {
       return updatePackages(argv._.slice(1), {
-        workingDir: process.cwd()
+        workingDir: process.cwd(),
+        force: argv.force
       })
     }
   })
