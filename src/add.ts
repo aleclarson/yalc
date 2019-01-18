@@ -217,14 +217,15 @@ export const addPackages = async (
     writePackage(workingDir, localPkg)
   }
 
+  const saved = !doPure && !options.noSave
   addPackageToLockfile(
     addedInstalls.map(i => ({
       name: i!.name,
       version: i!.version,
       replaced: i!.replaced,
       pure: doPure,
-      file: !options.link && !doPure,
-      link: options.link && !doPure,
+      file: saved && !options.link,
+      link: saved && options.link,
       signature: i.signature
     })),
     { workingDir }
