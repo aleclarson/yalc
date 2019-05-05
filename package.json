@@ -2,11 +2,7 @@
   "name": "@alloc/yalc",
   "version": "1.0.0-pre.27",
   "description": "Work yarn packages locally like a boss.",
-  "homepage": "https://github.com/whitecolor/yalc",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/whitecolor/yalc.git"
-  },
+  "repository": "aleclarson/yalc",
   "contributors": [
     "Alec Larson (https://github.com/aleclarson)"
   ],
@@ -14,10 +10,13 @@
     "semi": false,
     "singleQuote": true
   },
+  "main": "src/index.js",
   "bin": {
     "yalc": "src/yalc.js"
   },
-  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "trash **/*.js **/*.js.map **/*.d.ts **/*.log !**/node_modules/**",
