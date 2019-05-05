@@ -1,6 +1,6 @@
 {
   "name": "@alloc/yalc",
-  "version": "1.0.0-pre.27",
+  "version": "1.0.0",
   "description": "Work yarn packages locally like a boss.",
   "repository": "aleclarson/yalc",
   "contributors": [
