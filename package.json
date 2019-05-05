@@ -7,6 +7,9 @@
     "type": "git",
     "url": "https://github.com/whitecolor/yalc.git"
   },
+  "contributors": [
+    "Alec Larson (https://github.com/aleclarson)"
+  ],
   "prettier": {
     "semi": false,
     "singleQuote": true
