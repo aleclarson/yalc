@@ -1,5 +1,5 @@
 {
-  "name": "yalc",
+  "name": "@alloc/yalc",
   "version": "1.0.0-pre.27",
   "description": "Work yarn packages locally like a boss.",
   "homepage": "https://github.com/whitecolor/yalc",
