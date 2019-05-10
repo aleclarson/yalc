@@ -221,9 +221,9 @@ export const addPackages = async (
   const saved = !doPure && !options.noSave
   addPackageToLockfile(
     addedInstalls.map(i => ({
-      name: i!.name,
-      version: i!.version,
-      replaced: i!.replaced,
+      name: i.name,
+      version: i.version,
+      replaced: i.replaced,
       pure: doPure,
       file: saved && !options.link,
       link: saved && options.link,
