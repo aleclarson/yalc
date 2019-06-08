@@ -16,11 +16,6 @@ import {
 
 const shortSignatureLength = 8
 
-const ensureDir = (dirPath: string) =>
-  new Promise((resolve, reject) =>
-    fs.ensureDir(dirPath, err => (err ? reject(err) : resolve()))
-  )
-
 const getFileHash = (srcPath: string, relPath: string) => {
   return new Promise(async (resolve, reject) => {
     const stream = fs.createReadStream(srcPath)
@@ -35,7 +30,7 @@ const getFileHash = (srcPath: string, relPath: string) => {
 
 const copyFile = (srcPath: string, destPath: string, relPath: string) => {
   return new Promise(async (resolve, reject) => {
-    await ensureDir(dirname(destPath))
+    await fs.ensureDir(dirname(destPath))
     const stream = fs.createReadStream(srcPath)
     const md5sum = crypto.createHash('md5')
     md5sum.update(relPath.replace(/\\/g, '/'))
