@@ -1,10 +1,12 @@
 import * as fs from 'fs-extra'
+import { execSync } from 'child_process'
 import { dirname, join, relative } from 'path'
 import { addInstallations } from './installations'
 
 import { addPackageToLockfile } from './lockfile'
 
 import {
+  getPackageManager,
   getPackageStoreDir,
   values,
   parsePackageName,
@@ -149,6 +151,11 @@ export const addPackages = async (
         // Replace the local ".yalc/{name}" directory.
         fs.removeSync(localPackageDir)
         fs.copySync(storedPackageDir, localPackageDir)
+
+        const npmBin = getPackageManager(localPackageDir)
+        execSync(`${npmBin} run postinstall --if-present`, {
+          cwd: localPackageDir
+        })
 
         // Replace the local "node_modules/{name}" symlink.
         const nodeModulesDest = join(workingDir, 'node_modules', name)
