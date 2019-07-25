@@ -7,8 +7,7 @@ import {
   addPackages,
   updatePackages,
   removePackages,
-  getStoreMainDir,
-  getPackageManager
+  getStoreMainDir
 } from '.'
 
 import { showInstallations, cleanInstallations } from './installations'

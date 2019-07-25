@@ -1,4 +1,4 @@
-import { exec, execSync } from 'child_process'
+import { execSync } from 'child_process'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 import { copyPackageToStore } from './copy'
@@ -37,14 +37,6 @@ export interface PublishPackageOptions {
 const { join } = path
 
 const YALC_DIR = path.sep + values.yalcPackagesFolder + path.sep
-
-const execute = (cmd: string) => {
-  return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-    exec(cmd, (err, stdout, stderr) => {
-      err ? reject(err) : resolve({ stdout, stderr })
-    })
-  })
-}
 
 const isLink = (f: string) => {
   try {
