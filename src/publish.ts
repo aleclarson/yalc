@@ -2,6 +2,7 @@ import { exec, execSync } from 'child_process'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 import { copyPackageToStore } from './copy'
+import { addPackages } from './add'
 import {
   PackageInstallation,
   readInstallationsFile,
@@ -15,7 +16,8 @@ import {
   readPackage,
   getStorePackagesDir,
   PackageScripts,
-  findPackage
+  findPackage,
+  values
 } from '.'
 
 export interface PublishPackageOptions {
@@ -29,9 +31,12 @@ export interface PublishPackageOptions {
   yarn?: boolean
   files?: boolean
   private?: boolean
+  recursive?: boolean
 }
 
 const { join } = path
+
+const YALC_DIR = path.sep + values.yalcPackagesFolder + path.sep
 
 const execute = (cmd: string) => {
   return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
@@ -39,6 +44,14 @@ const execute = (cmd: string) => {
       err ? reject(err) : resolve({ stdout, stderr })
     })
   })
+}
+
+const isLink = (f: string) => {
+  try {
+    return fs.lstatSync(f).isSymbolicLink()
+  } catch {
+    return false
+  }
 }
 
 export const publishPackage = async (options: PublishPackageOptions) => {
@@ -49,60 +62,16 @@ export const publishPackage = async (options: PublishPackageOptions) => {
   if (!pkg) return
 
   if (pkg.private && !options.private) {
-    console.log(
+    return console.log(
       'Will not publish package with `private: true`' +
         ' use --private flag to force publishing.'
     )
-    return
   }
 
-  const scripts = pkg.scripts || ({} as PackageScripts)
-  const scriptRunCmd =
-    !options.force && pkg.scripts ? getPackageManager(workingDir) + ' run ' : ''
+  const publishedNames = new Set<string>()
+  await publishDepthFirst(pkg, workingDir)
 
-  if (scriptRunCmd) {
-    const scriptNames: (keyof PackageScripts)[] = [
-      'preyalc',
-      'prepare',
-      'prepublishOnly',
-      'prepublish'
-    ]
-    const scriptName = scriptNames.filter(name => !!scripts[name])[0]
-    if (scriptName) {
-      const scriptCmd = scripts[scriptName]
-      console.log(`Running ${scriptName} script: ${scriptCmd}`)
-      execSync(scriptRunCmd + scriptName, {
-        cwd: workingDir,
-        stdio: 'inherit'
-      })
-    }
-  }
-
-  const copyRes = await copyPackageToStore(pkg, options)
-  if (options.changed && !copyRes) {
-    console.log('Package content has not changed, skipping publishing.')
-    return
-  }
-
-  if (scriptRunCmd) {
-    const scriptNames: (keyof PackageScripts)[] = ['postyalc', 'postpublish']
-    const scriptName = scriptNames.filter(name => !!scripts[name])[0]
-    if (scriptName) {
-      const scriptCmd = scripts[scriptName]
-      console.log(`Running ${scriptName} script: ${scriptCmd}`)
-      execSync(scriptRunCmd + scriptName, {
-        cwd: workingDir,
-        stdio: 'inherit'
-      })
-    }
-  }
-
-  const publishedPackageDir = join(getStorePackagesDir(), pkg.name, pkg.version)
-  const publishedPkg = readPackage(publishedPackageDir)!
-  console.log(
-    `${publishedPkg.name}@${publishedPkg.version} published in store.`
-  )
-
+  // Only the root package is pushed.
   if (options.push || options.pushSafe) {
     const installationsConfig = readInstallationsFile()
     const installationPaths = installationsConfig[pkg.name] || []
@@ -121,5 +90,96 @@ export const publishPackage = async (options: PublishPackageOptions) => {
     if (installationsToRemove.length) {
       await removeInstallations(installationsToRemove)
     }
+  }
+
+  // Publish linked dependencies first.
+  async function publishDepthFirst(pkg: PackageManifest, pkgDir: string) {
+    if (publishedNames.has(pkg.name)) return
+    publishedNames.add(pkg.name)
+
+    const deps = pkg.dependencies
+    if (deps && options.recursive) {
+      const namesToAdd: string[] = []
+      for (const name in deps) {
+        const depDir = join(
+          pkgDir,
+          'node_modules',
+          name.replace(/\//g, path.sep)
+        )
+        if (isLink(depDir)) {
+          const target = fs.readlinkSync(depDir)
+          if (!target.includes(YALC_DIR)) {
+            const dep = readPackage(depDir)
+            if (dep && !dep.private) {
+              await publishDepthFirst(dep, depDir)
+              namesToAdd.push(dep.name)
+            }
+          }
+        }
+      }
+      await addPackages(namesToAdd, {
+        workingDir: pkgDir
+      })
+    }
+
+    console.log(`\nPublishing: ${pkg.name}`)
+    await publish(pkg, pkgDir)
+  }
+
+  // Publish a single package.
+  async function publish(pkg: PackageManifest, pkgDir: string) {
+    const scripts = pkg.scripts || {}
+    const scriptRunCmd =
+      !options.force && pkg.scripts ? getPackageManager(pkgDir) + ' run ' : ''
+
+    if (scriptRunCmd) {
+      const scriptNames: (keyof PackageScripts)[] = [
+        'preyalc',
+        'prepare',
+        'prepublishOnly',
+        'prepublish'
+      ]
+      const scriptName = scriptNames.filter(name => !!scripts[name])[0]
+      if (scriptName) {
+        const scriptCmd = scripts[scriptName]
+        console.log(`Running "${scriptName}" script: ${scriptCmd}`)
+        execSync(scriptRunCmd + scriptName, {
+          cwd: pkgDir,
+          stdio: 'inherit'
+        })
+      }
+    }
+
+    const copyRes = await copyPackageToStore(pkg, {
+      ...options,
+      workingDir: pkgDir
+    })
+    if (options.changed && !copyRes) {
+      console.log('Package content has not changed, skipping publish.')
+      return
+    }
+
+    if (scriptRunCmd) {
+      const scriptNames: (keyof PackageScripts)[] = ['postyalc', 'postpublish']
+      const scriptName = scriptNames.filter(name => !!scripts[name])[0]
+      if (scriptName) {
+        const scriptCmd = scripts[scriptName]
+        console.log(`Running "${scriptName}" script: ${scriptCmd}`)
+        execSync(scriptRunCmd + scriptName, {
+          cwd: pkgDir,
+          stdio: 'inherit'
+        })
+      }
+    }
+
+    const publishedPackageDir = join(
+      getStorePackagesDir(),
+      pkg.name,
+      pkg.version
+    )
+    const publishedPkg = readPackage(publishedPackageDir)!
+    console.log(
+      `${publishedPkg.name}@${publishedPkg.version} published locally.`
+    )
   }
 }

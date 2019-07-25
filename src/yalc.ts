@@ -15,7 +15,15 @@ import { showInstallations, cleanInstallations } from './installations'
 
 import { checkManifest } from './check'
 
-const publishFlags = ['knit', 'force', 'sig', 'changed', 'yarn', 'files']
+const publishFlags = [
+  'knit',
+  'force',
+  'sig',
+  'changed',
+  'yarn',
+  'files',
+  'recursive'
+]
 
 const cliCommand = values.myNameIs
 
@@ -51,6 +59,7 @@ yargs
       return yargs
         .default('sig', true)
         .boolean(['push', 'push-safe'].concat(publishFlags))
+        .alias('r', 'recursive')
     },
     handler: argv => {
       const folder = argv._[1]
@@ -64,7 +73,8 @@ yargs
         yarn: argv.yarn,
         changed: argv.changed,
         files: argv.files,
-        private: argv.private
+        private: argv.private,
+        recursive: argv.recursive
       })
     }
   })
@@ -98,6 +108,7 @@ yargs
         .default('force', undefined)
         .default('sig', true)
         .boolean(['safe'].concat(publishFlags))
+        .alias('r', 'recursive')
     },
     handler: argv => {
       return publishPackage({
@@ -110,7 +121,8 @@ yargs
         yarn: argv.yarn,
         changed: argv.changed,
         files: argv.files,
-        private: argv.private
+        private: argv.private,
+        recursive: argv.recursive
       })
     }
   })
