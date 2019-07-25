@@ -44,6 +44,7 @@ export const addPackages = async (
   packages: string[],
   options: AddPackagesOptions
 ) => {
+  if (!packages.length) return
   const workingDir = findPackage(options.workingDir)
   if (!workingDir) return
 
