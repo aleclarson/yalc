@@ -191,9 +191,7 @@ export const addPackages = async (
 
         const addedAction = options.noSave ? 'linked' : 'added'
         console.log(
-          `Package ${pkg.name}@${
-            pkg.version
-          } ${addedAction} ==> ${nodeModulesDest}.`
+          `Package ${pkg.name}@${pkg.version} ${addedAction} ==> ${nodeModulesDest}.`
         )
       }
 
