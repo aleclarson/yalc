@@ -91,8 +91,8 @@ export const copyPackageToStore = async (
 
     // The local ".yalc" directory is copied but not hashed.
     const yalcLocalCacheDir = join(workingDir, values.yalcPackagesFolder)
-    if (fs.existsSync(yalcLocalCacheDir)) {
-      fs.copySync(
+    if (await fs.pathExists(yalcLocalCacheDir)) {
+      await fs.copy(
         yalcLocalCacheDir,
         join(storePackageStoreDir, values.yalcPackagesFolder)
       )
